@@ -37,26 +37,23 @@ each screen; the live training does that.
    **Paid from** choice: Bills account, or Credit card. Card charges are added up
    into one **Credit card auto-pay** line with its own due date, and the plan lists
    the individual charges under it in grey, like Rose's sheet. Nothing is counted
-   twice. Every bill needs its "When" (and the card line its due date) before
+   twice. Every income row and every bill needs its "When" (and the card line its due date) before
    Continue works; missing ones turn coral.
 4. **Spending.** One monthly amount (two for couples, one per partner), with the
    weekly equivalent shown underneath and a running "what's left after Bills" line.
    If Spending is more than what is left after Bills, the line turns coral and
    Continue refuses until it is lowered.
-5. **Upcoming.** A general cushion, not a ledger. The list is a thinking aid: each
-   row is what for and roughly how much per year, divided by 12. Under it, one
-   fixed number, **Your Upcoming transfer**, prefilled with the list's monthly total
-   rounded up to the next $50 and editable. That fixed number is what goes on the
-   map; the list can be skipped entirely. Same over-budget check as Spending.
+5. **Upcoming.** One number: 5% of take-home pay, rounded up to the next $50,
+   prefilled and editable, with a "Reset to 5%" link if they change it. No list.
+   The share and rounding step live in `config.js`.
 6. **Financial Goals.** "What do you have left to put towards Financial Goals?"
    The tracker shows all four buckets against take-home pay. Bills and Upcoming
    link back to their lists, Spending is editable in place, and Financial Goals is
    always whatever is left. If the plan is over, the Financial Goals row turns
-   coral, the bar shows a striped overflow segment, and "See my map" refuses until
-   Spending, Upcoming or Bills are trimmed. The member names the one financial goal
-   the money goes to (free text, with chips), or picks it in the **Financial Goal
-   Selector**, which opens inside the Planner as a modal (see below) so nothing
-   typed so far is lost.
+   coral and "See my map" refuses until Spending, Upcoming or Bills are trimmed.
+   Under that, **the Financial Waterfall** graphic (`waterfall.png`) with its ten
+   steps as tappable choices; the step they tap becomes the goal ("3. Max out
+   401(k) employer match"), or they type their own. The steps are in `config.js`.
 7. **Your map.** "<Name>'s Updated Money Flywheel Map": the map drawn with this
    plan's numbers on the arrows (Paycheck → Hub, Hub → Bills, Spending, Upcoming,
    Financial Goals), a donut of how take-home pay is split (name, amount and share
@@ -83,11 +80,8 @@ adjust. "Start over" asks for a second click before erasing.
   = 4 a month, every 2 weeks = 2 a month; the extra paychecks in a year are bonus
   rounds). Bills round **up** (every week = 52/12, every 2 weeks = 26/12). The
   factors live in `config.js` under `cadence`.
-- Upcoming: each item is a yearly estimate divided by 12. The suggested transfer is
-  the list total rounded up to `upcomingRoundTo` (default $50). If the member types
-  their own number, that number is used until they clear it or click "Use the
-  suggestion". The plan shows one bold "Upcoming cushion" line with the items
-  under it in grey as what it roughly covers.
+- Upcoming is `upcomingShare` (5%) of take-home, rounded up to `upcomingRoundTo`
+  ($50), unless the member types their own number.
 - Bills marked Credit card are summed into the Credit card auto-pay line; the Bills
   total counts each bill once.
 - Financial Goals = take-home pay − Bills − Spending − Upcoming. The four buckets
@@ -98,22 +92,6 @@ adjust. "Start over" asks for a second click before erasing.
 - Percentages are shares of monthly take-home pay into the Hub, shown with two
   decimals like Rose's sheet (88.04%).
 
-## Plugging in the Financial Goal Selector
-
-Paste the Selector's URL into `links.goalSelector.url` in `config.js`. A coral
-button then appears under the goal field on the Financial Goals screen. It opens
-the Selector in a modal inside the Planner, with the monthly Financial Goals
-amount in the URL (`?monthly=1539&embed=1`). The Selector hands the choice back with
-
-```js
-window.parent.postMessage({ goalSelected: "Emergency fund" }, "*");
-```
-
-and the Planner fills in the goal field, closes the modal, and the member carries
-on. Nothing they typed is touched. Two things the Selector needs: a `?embed=1`
-mode that skips its own gate (or lists the Planner's host in its
-`allowedEmbedHosts`), and that one `postMessage` when a goal is chosen.
-
 ## Files
 
 | File | What it is | Who edits it |
@@ -123,17 +101,18 @@ mode that skips its own gate (or lists the Planner's host in its
 | `app.js` | The screens: questions, list editors, balance check, plan, PNG export, gate | Cez |
 | `styles.css` | Look and feel (white / navy / coral, Poppins + Lato). The four bucket colors are the `--c-*` tokens at the top | Cez |
 | `logo.png` | The 30 Minute Money logo | Rose's team |
+| `waterfall.png` | The Financial Waterfall graphic on the Financial Goals screen | Rose's team |
 | `index.html` | Page shell | Cez |
 
-## Deploy (about five minutes, no code)
+## Publish (GitHub Pages)
 
-1. Go to https://app.netlify.com/drop and drag this whole folder onto the page.
-2. Netlify gives you a URL like `https://something.netlify.app`. Rename the site in
-   Site settings, or add a custom domain (Domain management → Add domain, then one
-   CNAME record).
-3. Every later change: drag the folder again, or connect the folder to a Git repo.
-
-Cloudflare Pages and Vercel work the same way.
+The public version lives at https://team-rose-han.github.io/cashflow-planner/ and is
+served from the `main` branch of the `Team-Rose-Han/cashflow-planner` repo. To
+publish a new version, put the contents of this folder (not the folder itself) at the
+root of that repo and push to `main`; GitHub Pages picks it up within a minute or
+two. Bump the `?v=` number on the three script tags and the stylesheet link in
+`index.html` with each release so members' browsers load the new files instead of
+cached ones.
 
 ## Put it inside Circle (custom page)
 

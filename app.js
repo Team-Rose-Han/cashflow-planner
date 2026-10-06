@@ -226,14 +226,6 @@
       head: ["Name", "When", "Amount", "How often", "Paid from", "Per month", ""],
       add: "Add a bill", total: "Bills, per month", empty: "No bills yet. Pick from the suggestions above or add a row.",
     },
-    upcoming: {
-      key: "upcoming", kind: "upcoming",
-      h2: () => C.questions.upcoming,
-      what: () => C.buckets.upcoming.what, chips: () => C.upcomingSuggestions, tip: () => C.tips.upcoming,
-      ph: { name: "e.g. Travel" },
-      head: ["What for", "About how much this year?", "Per month", ""],
-      add: "Add an upcoming expense", total: "estimated monthly amount to fund the expenses above", empty: "Add a few rough guesses, or skip the list and just type your number below.",
-    },
   };
   function chipsHtml(chips, rows) {
     const used = new Set(rows.map((r) => P.trim(r.name).toLowerCase()));
@@ -268,20 +260,6 @@
       <span class="amt" id="cardtotal">${P.fmt(P.cardTotal(state))}<small>/mo on the card</small></span>
     </div>`;
   }
-  // The one number that goes on the map, with the list's suggestion beside it.
-  function upcomingBoxHtml() {
-    const own = String(state.upcomingAmount || "").trim() !== "";
-    const sug = P.upcomingSuggested(state);
-    return `<div class="fixedbox" id="upbox">
-      <div><span class="nm">${esc(C.upcomingBox.title)}</span><span class="sub">${esc(C.upcomingBox.sub)}</span></div>
-      ${moneyIn(`id="upamount" aria-label="Upcoming transfer per month"`, own ? prettyMoney(state.upcomingAmount) : prettyMoney(sug))}
-      <span class="hint" id="uphint">${upcomingHint(own, sug)}</span>
-      <div class="stuck"><button type="button" class="btn ghost small" id="stuck">${esc(C.upcomingBox.stuckLabel)}</button><span class="hint" id="stucknote" aria-live="polite"></span></div>
-    </div>`;
-  }
-  const upcomingHint = (own, sug) => (own
-    ? (sug > 0 ? `Suggested from your list: ${P.fmt0(sug)}. <button type="button" class="linkbtn" id="usesug">Use the suggestion</button>` : `Add a few items above and the list will suggest a number.`)
-    : (sug > 0 ? `This is your list rounded up to the next $${C.upcomingRoundTo}. Type over it if another number feels right.` : `Type a monthly number, or add a few items above for a suggestion.`));
   function renderList(panel, id) {
     const L = LISTS[id];
     const rows = state[L.key];
@@ -297,7 +275,6 @@
           ${rows.length ? rows.map((r) => rowHtml(L, r)).join("") : `<div class="empty">${esc(L.empty)}</div>`}
           ${id === "bills" ? cardBoxHtml() : ""}
           <div class="rowfoot"><button type="button" class="btn ghost small" id="add">+ ${esc(L.add)}</button><span class="total">${P.fmt(total)}<small>${esc(L.total)}</small></span></div>
-          ${id === "upcoming" ? upcomingBoxHtml() : ""}
         </div>
       </div>${navHtml()}`;
     wireNav(panel, id);
@@ -314,15 +291,6 @@
       refreshTracker(panel);
       rows.forEach((r) => { const mo = $(`[data-row="${r.id}"] .mo`, panel); if (mo) mo.innerHTML = `${P.fmt0(P.monthlyOf(r, L.kind))}<small>/mo</small>`; });
       const ct = $("#cardtotal", panel); if (ct) ct.innerHTML = `${P.fmt(P.cardTotal(state))}<small>/mo on the card</small>`;
-      const up = $("#upamount", panel);
-      if (up) {
-        const own = String(state.upcomingAmount || "").trim() !== "";
-        const sug = P.upcomingSuggested(state);
-        if (!own && document.activeElement !== up) up.value = prettyMoney(sug);
-        $("#uphint", panel).innerHTML = upcomingHint(own, sug);
-        wireSug();
-      }
-      $("#qerr", panel).textContent = "";
     };
 
     $("#add", panel).addEventListener("click", () => { const r = newRow(); renderList(panel, id); focusRow(r, "name"); });
@@ -347,19 +315,6 @@
     });
     const cd = $("#cardday", panel);
     if (cd) cd.addEventListener("input", () => { state.cardDay = cd.value; save(); cd.classList.remove("missing"); });
-    const up = $("#upamount", panel);
-    function wireSug() { const b = $("#usesug", panel); if (b) b.addEventListener("click", () => { state.upcomingAmount = ""; save(); refresh(); up.value = prettyMoney(P.upcomingSuggested(state)); }); }
-    if (up) {
-      $("#stuck", panel).addEventListener("click", () => {
-        const n = P.upcomingStuck(state);
-        state.upcomingAmount = String(n); save();
-        up.value = prettyMoney(n); refresh();
-        $("#stucknote", panel).textContent = C.upcomingBox.stuckNote;
-      });
-      up.addEventListener("input", () => { state.upcomingAmount = up.value; save(); refresh(); $("#stucknote", panel).textContent = ""; });
-      up.addEventListener("blur", () => { up.value = prettyMoney(String(state.upcomingAmount).trim() ? state.upcomingAmount : P.upcomingSuggested(state)); });
-      wireSug();
-    }
   }
 
   // ---------------------------------------------------------
@@ -433,6 +388,35 @@
   const weekLine = (v) => { const n = P.money(v); return n > 0 ? `about ${P.fmt0((n * 12) / 52)} a week` : "per month"; };
 
   // ---------------------------------------------------------
+  //  SCREEN: UPCOMING
+  //  One number: 5% of take-home, rounded up to $50, editable.
+  // ---------------------------------------------------------
+  function renderUpcoming(panel) {
+    const own = String(state.upcomingAmount || "").trim() !== "";
+    const sug = P.upcomingSuggested(state);
+    const B = C.upcomingBox;
+    panel.innerHTML = `<div class="question">
+        <h2>${esc(C.questions.upcoming)}</h2>
+        <p class="what">${esc(C.buckets.upcoming.what)}</p>
+        ${C.tips.upcoming ? `<p class="tip">${esc(C.tips.upcoming)}</p>` : ""}
+        <div class="tracker" id="tracker" data-stage="upcoming">${trackerHtml("upcoming")}</div>
+        <div class="fixedbox" id="upbox">
+          <div><span class="nm">${esc(B.title)}</span><span class="sub">${esc(B.sub)}</span></div>
+          ${moneyIn(`id="upamount" aria-label="Upcoming per month"`, prettyMoney(own ? state.upcomingAmount : sug))}
+          <span class="hint" id="uphint">${esc(B.nudge)} ${own ? `<button type="button" class="linkbtn" id="usesug">${esc(B.resetLabel)} (${P.fmt0(sug)})</button>` : ""}</span>
+        </div>
+      </div>${navHtml()}`;
+    wireNav(panel, "upcoming");
+    const up = $("#upamount", panel);
+    const hint = () => { $("#uphint", panel).innerHTML = `${esc(B.nudge)} ${String(state.upcomingAmount || "").trim() !== "" ? `<button type="button" class="linkbtn" id="usesug">${esc(B.resetLabel)} (${P.fmt0(sug)})</button>` : ""}`; wireReset(); };
+    const wireReset = () => { const b = $("#usesug", panel); if (b) b.addEventListener("click", () => { state.upcomingAmount = ""; save(); up.value = prettyMoney(P.upcomingSuggested(state)); refreshTracker(panel); hint(); $("#qerr", panel).textContent = ""; }); };
+    up.addEventListener("input", () => { state.upcomingAmount = up.value; save(); refreshTracker(panel); hint(); $("#qerr", panel).textContent = ""; });
+    up.addEventListener("blur", () => { up.value = prettyMoney(String(state.upcomingAmount || "").trim() ? state.upcomingAmount : P.upcomingSuggested(state)); });
+    wireReset();
+    setTimeout(() => up.focus(), 0);
+  }
+
+  // ---------------------------------------------------------
   //  SCREEN: BALANCE
   //  The four buckets against take-home pay. Spending is editable here;
   //  Bills and Upcoming link back to their lists; Goals is the remainder.
@@ -442,29 +426,14 @@
     if (t.over) return `<div class="verdict over"><span>⚠</span><span><b>${P.fmt(-t.goals)} a month over.</b> Bills, Spending and Upcoming add up to more than your take-home pay. Lower Spending here, or go back and trim Upcoming or Bills.</span></div>`;
     return `<div class="verdict ok"><span>✓</span><span><b>Every dollar is assigned.</b> ${P.fmt(t.goals)} a month (${P.fmtPct(t.share.goals)}) flows to Financial Goals.</span></div>`;
   }
-  // The Financial Goal Selector opens inside the Planner (a modal with the Selector in it),
-  // so nothing typed so far is lost. Hidden until config has a url.
-  const selectorUrl = (t) => { const L = C.links && C.links.goalSelector; if (!L || !L.url) return ""; return L.url + (L.url.includes("?") ? "&" : "?") + "monthly=" + encodeURIComponent(P.up(Math.max(t.goals, 0))) + "&embed=1"; };
-  function goalLinkHtml(t) {
-    const L = C.links && C.links.goalSelector;
-    if (!L || !L.url) return `<p class="tip">Leave it blank if you're not sure yet; the plan will say the goal is still to be chosen.</p>`;
-    return `<div class="actions"><button type="button" class="btn coral" id="opensel">${esc(L.label || "Pick my goal with the Financial Goal Selector")}</button></div>`;
+  // The Financial Waterfall: the graphic, and the steps as tappable choices.
+  function waterfallHtml() {
+    const steps = C.waterfall || [];
+    return `<div class="waterfall">
+        <img src="waterfall.png" alt="The Financial Waterfall: ten steps from a $2,000 starter emergency fund to paying off the mortgage early" width="1280" height="1012">
+        <div class="steps">${steps.map((g, i) => { const v = `${i + 1}. ${g}`; return `<button type="button" class="step${state.goalName === v ? " on" : ""}" data-goal="${esc(v)}"><span class="n">${i + 1}</span><span class="t">${esc(g)}</span></button>`; }).join("")}</div>
+      </div>`;
   }
-  function openSelector() {
-    const url = selectorUrl(P.totals(state));
-    if (!url) return;
-    $("#goalframe").src = url;
-    $("#goalmodal").hidden = false;
-  }
-  function closeSelector() { $("#goalmodal").hidden = true; $("#goalframe").src = "about:blank"; }
-  // The Selector reports the chosen goal with postMessage({ goalSelected: "..." }).
-  window.addEventListener("message", (e) => {
-    const d = e.data;
-    if (!d || typeof d !== "object" || typeof d.goalSelected !== "string") return;
-    state.goalName = d.goalSelected.trim().slice(0, 60); save();
-    const goal = $("#goal"); if (goal) { goal.value = state.goalName; goal.dispatchEvent(new Event("input")); }
-    closeSelector();
-  });
   function renderBalance(panel) {
     const t = P.totals(state);
     const B = C.buckets;
@@ -480,7 +449,7 @@
             <button type="button" class="edit" data-go="bills">Edit bills</button>
             <span class="amt" data-amt="bills">${P.fmt(t.bills)}<small>${P.fmtPct(t.share.bills)} of take-home</small></span></div>
           ${spendRows}
-          <div class="bucket"><span class="swatch upcoming"></span><div><span class="nm">${esc(B.upcoming.name)}</span><br><span class="sub">${state.upcoming.length} ${state.upcoming.length === 1 ? "cost" : "costs"} you can see coming</span></div>
+          <div class="bucket"><span class="swatch upcoming"></span><div><span class="nm">${esc(B.upcoming.name)}</span><br><span class="sub">Your fixed monthly cushion (5% of take-home to start)</span></div>
             <button type="button" class="edit" data-go="upcoming">Edit upcoming</button>
             <span class="amt" data-amt="upcoming">${P.fmt(t.upcoming)}<small>${P.fmtPct(t.share.upcoming)} of take-home</small></span></div>
           <div class="bucket goals${t.over ? " over" : ""}" id="goalsrow"><span class="swatch goals"></span><div><span class="nm">${esc(B.goals.name)}</span><br><span class="sub">Whatever is left after the other three</span></div>
@@ -489,10 +458,9 @@
         </div>
         <div id="verdict">${verdictHtml(t)}</div>
         <div class="goalrow">
-          <label class="eyebrow" for="goal">What is the one financial goal this money goes to right now?</label>
-          <div class="textrow"><input id="goal" type="text" maxlength="60" placeholder="e.g. Emergency fund" value="${esc(state.goalName)}" autocomplete="off"></div>
-          <div class="chips">${C.goalSuggestions.map((g) => `<button type="button" class="chip${state.goalName === g ? " on" : ""}" data-goal="${esc(g)}">${esc(g)}</button>`).join("")}</div>
-          ${goalLinkHtml(t)}
+          <label class="eyebrow" for="goal">${esc(C.goalPrompt)}</label>
+          ${waterfallHtml()}
+          <div class="textrow"><input id="goal" type="text" maxlength="80" placeholder="Tap your step above, or type your own goal" value="${esc(state.goalName)}" autocomplete="off"></div>
         </div>
       </div>${navHtml({ label: "See my map", coral: true })}`;
     wireNav(panel, "balance");
@@ -513,7 +481,6 @@
     const goal = $("#goal", panel);
     goal.addEventListener("input", () => { state.goalName = goal.value; save(); $$("[data-goal]", panel).forEach((c) => c.classList.toggle("on", c.dataset.goal === goal.value.trim())); });
     $$("[data-goal]", panel).forEach((c) => c.addEventListener("click", () => { goal.value = c.dataset.goal; goal.dispatchEvent(new Event("input")); }));
-    const sel = $("#opensel", panel); if (sel) sel.addEventListener("click", openSelector);
   }
 
   // ---------------------------------------------------------
@@ -720,7 +687,8 @@
     if (s.id === "name") renderName(panel);
     else if (s.id === "partner") renderPartner(panel);
     else if (s.id === "partnerName") renderPartnerName(panel);
-    else if (s.id === "income" || s.id === "bills" || s.id === "upcoming") renderList(panel, s.id);
+    else if (s.id === "income" || s.id === "bills") renderList(panel, s.id);
+    else if (s.id === "upcoming") renderUpcoming(panel);
     else if (s.id === "spending") renderSpending(panel);
     else if (s.id === "balance") renderBalance(panel);
     else if (s.id === "plan") renderPlan();
@@ -748,8 +716,6 @@
     $("#print").addEventListener("click", () => window.print());
     $("#restart").addEventListener("click", restart);
     $("#close").addEventListener("click", () => ($("#overlay").hidden = true));
-    $("#goalclose").addEventListener("click", closeSelector);
-    $("#goalmodal").addEventListener("click", (e) => { if (e.target === e.currentTarget) closeSelector(); });
     $("#overlay").addEventListener("click", (e) => { if (e.target === e.currentTarget) $("#overlay").hidden = true; });
     new ResizeObserver(postHeight).observe(document.body);
     initGate();

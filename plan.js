@@ -44,16 +44,11 @@
   // Bills marked "Credit card" are paid through one Credit card auto-pay line.
   const onCard = (r) => r.via === "card";
   const cardTotal = (s) => sumMonthly((s.bills || []).filter(onCard), "expense");
-  const upcomingListTotal = (s) => sumMonthly(s.upcoming, "upcoming");
+  // Upcoming is a share of take-home pay (5% by default), rounded up to the nearest $50.
   function upcomingSuggested(s) {
     const step = Number(C.upcomingRoundTo) || 1;
-    return Math.ceil(upcomingListTotal(s) / step - 1e-9) * step;
-  }
-  // The "stuck" starting point: a share of take-home pay, rounded up like the suggestion.
-  function upcomingStuck(s) {
-    const step = Number(C.upcomingRoundTo) || 1;
     const income = sumMonthly(s.incomes, "income");
-    return Math.ceil((income * (Number(C.upcomingStuckShare) || 0)) / step - 1e-9) * step;
+    return Math.ceil((income * (Number(C.upcomingShare) || 0)) / step - 1e-9) * step;
   }
   // The number that counts: the member's own if they typed one, else the suggestion.
   const upcomingAmount = (s) => (s.upcomingAmount != null && String(s.upcomingAmount).trim() !== "" ? up(money(s.upcomingAmount)) : upcomingSuggested(s));
@@ -211,5 +206,5 @@
   const csv = (s) => table(s).map((row) => row.map(csvCell).join(",")).join("\r\n");
   const tsv = (s) => table(s).map((row) => row.map((v) => String(v == null ? "" : v).replace(/[\t\n]/g, " ")).join("\t")).join("\n");
 
-  window.PLANNER = { money, round2, up, fmt, fmt0, fmtSmart, pct, fmtPct, trim, possessive, factor, upcomingMonthly, upcomingListTotal, upcomingSuggested, upcomingStuck, upcomingAmount, onCard, cardTotal, monthlyOf, sumMonthly, shared, spendingAccounts, accounts, planTitle, totals, arrows, plan, accountLabel, table, csv, tsv };
+  window.PLANNER = { money, round2, up, fmt, fmt0, fmtSmart, pct, fmtPct, trim, possessive, factor, upcomingMonthly, upcomingSuggested, upcomingAmount, onCard, cardTotal, monthlyOf, sumMonthly, shared, spendingAccounts, accounts, planTitle, totals, arrows, plan, accountLabel, table, csv, tsv };
 })();

@@ -397,7 +397,19 @@ details.more > div { margin-top: 10px; }
 .verdict.ok { background: var(--good-soft); color: var(--good); }
 .verdict.over { background: var(--coral-soft); color: var(--coral-ink); }
 .verdict b { font-family: var(--display); }
-.goalrow { display: grid; gap: 10px; }
+.goalrow { display: grid; gap: 14px; }
+.waterfall { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px 28px; align-items: start; }
+.waterfall img { width: 100%; height: auto; max-width: 620px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); }
+.waterfall .steps { display: grid; gap: 6px; }
+.waterfall .step {
+  display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; text-align: left;
+  background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 8px 12px; cursor: pointer; font-size: 14px;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.waterfall .step .n { font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--navy); background: #eef1fb; border-radius: 999px; width: 28px; height: 28px; display: grid; place-items: center; }
+.waterfall .step:hover { border-color: var(--ink); background: var(--soft); }
+.waterfall .step.on { background: var(--navy); border-color: var(--navy); color: var(--navy-ink); }
+.waterfall .step.on .n { background: var(--coral); color: #1a0d09; }
 .goalrow .reclink { font-size: 14px; }
 .goalrow .reclink a { color: var(--line); font-family: var(--display); font-weight: 600; text-decoration: none; }
 .goalrow .reclink a:hover { text-decoration: underline; }
@@ -531,8 +543,6 @@ table.plan tfoot td.bad { color: var(--coral-ink); }
 .overlay { position: fixed; inset: 0; background: rgba(10, 10, 12, 0.7); display: grid; place-items: center; padding: 24px; z-index: 50; }
 .overlay .sheet { background: var(--card); border-radius: 16px; padding: 18px; max-width: min(1100px, 100%); max-height: 100%; overflow: auto; display: grid; gap: 12px; }
 .overlay img { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--border); }
-.overlay .sheet.modal { width: min(1100px, 100%); }
-.overlay .sheet.modal iframe { width: 100%; height: min(78vh, 900px); border: 1.5px solid var(--border); border-radius: 12px; background: var(--card); }
 
 /* --- gate --- */
 .gate { min-height: 70vh; display: grid; place-items: center; }
@@ -584,6 +594,7 @@ table.plan tfoot td.bad { color: var(--coral-ink); }
   .panel { padding: 18px 16px 20px; }
   .plan-card { padding: 20px 16px 22px; }
   .fmap { gap: 18px; }
+  .waterfall { grid-template-columns: 1fr; }
   .pie { justify-content: center; }
   .pie-list { flex: 1 1 100%; }
   .pie-list li { grid-template-columns: 12px minmax(0, 1fr) 56px 90px; gap: 8px; }

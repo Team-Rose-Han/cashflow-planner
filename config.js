@@ -16,18 +16,24 @@ window.PLANNER_CONFIG = {
   // When the tool is embedded (iframe) on one of these hosts, no code is asked.
   allowedEmbedHosts: ["programs.rosehan.com", "rosehan.com", "circle.so"],
 
-  // ---- Links --------------------------------------------------
-  // Leave a url empty and the link disappears.
-  links: {
-    // The Financial Goal Selector opens INSIDE the Planner (a modal) once a url is set, so
-    // nothing the member typed is lost. The monthly Financial Goals amount is appended as
-    // ?monthly=1296&embed=1. When the member picks a goal, the Selector sends it back with
-    //   window.parent.postMessage({ goalSelected: "Emergency fund" }, "*")
-    // and the Planner fills in the goal field and closes the modal.
-    goalSelector: { label: "Pick my goal with the Financial Goal Selector", url: "" },
-  },
-  // Printed in the plan's Financial Goals row when the goal is left blank.
-  goalPlaceholder: "To be chosen in the Financial Goal Selector",
+  // ---- The Financial Waterfall -------------------------------------
+  // Shown on the Financial Goals screen (waterfall.png) with the steps as tappable
+  // choices. The member picks the step they are on; that is their current goal.
+  waterfall: [
+    "Save $2,000 starter emergency fund",
+    "Pay off ALL credit card debt",
+    "Max out 401(k) employer match",
+    "Save 6-month full emergency fund",
+    "Max out Roth or Backdoor Roth IRA",
+    "Max out HSA (if eligible)",
+    "Max out 401(k), Solo 401(k) or SEP IRA",
+    "Pay off ALL other debt (except mortgage)",
+    "Fund taxable brokerage or save for house/college",
+    "Pay off mortgage early",
+  ],
+  goalPrompt: "Which step of the Financial Waterfall are you on? That's the goal this money goes to.",
+  // Printed in the plan's Financial Goals row when no step is picked.
+  goalPlaceholder: "Pick your step on the Financial Waterfall",
 
   // ---- The accounts -------------------------------------------
   // Name and type match the boxes on the Money Flywheel map. "what" is the one-line
@@ -70,7 +76,7 @@ window.PLANNER_CONFIG = {
     income: "Use take-home pay (what actually lands in your account), not your gross salary.",
     bills: "To find them all: scroll through the last two months of bank and credit card statements, open the subscriptions list on your phone (App Store or Google Play), and search your email for \"renewal\" to catch the yearly ones.",
     spending: "Pick a number you can actually live on. If it's too tight you'll raid the other accounts; if it's too loose, nothing reaches your goals.",
-    upcoming: "Here are two easy ways to find your number: 1) Walk through the next 12 months of your calendar and name the big events (trips, holidays, weddings, car registration). 2) Use the search function in your credit card transactions to filter for any charge over $500 that wasn't a bill.",
+    upcoming: "",
     balance: "Whatever is left after Bills, Spending and Upcoming is what goes to Financial Goals every month.",
     plan: "",
   },
@@ -97,35 +103,16 @@ window.PLANNER_CONFIG = {
     { group: "Subscriptions", items: ["Streaming", "Music", "Gym", "Meal delivery", "Cloud storage", "Software & apps", "Supplements", "Memberships"] },
     { group: "Once a year", freq: "yearly", items: ["Credit card annual fee", "Car registration", "Amazon Prime", "Costco membership"] },
   ],
-  // Each chip carries a prompt that appears in the amount field, so members fill in a
-  // multiplication instead of guessing a yearly total.
-  upcomingSuggestions: [
-    { name: "Travel", hint: "2 trips × $1,500" },
-    { name: "Christmas presents", hint: "8 people × $75" },
-    { name: "Birthdays", hint: "6 people × $50" },
-    { name: "Weddings", hint: "2 weddings × $600" },
-    { name: "Car tires & repairs", hint: "$800" },
-    { name: "Dental work", hint: "$1,200" },
-    { name: "Vet bills", hint: "$500" },
-    { name: "Clothing", hint: "4 seasons × $200" },
-    { name: "Home repairs", hint: "$1,000" },
-    { name: "New phone / laptop", hint: "$1,000" },
-  ],
-  // The suggested Upcoming transfer is the list's monthly total rounded UP to this.
+  // Upcoming is a fixed share of take-home pay, rounded up to the nearest $50.
+  upcomingShare: 0.05,
   upcomingRoundTo: 50,
-  // Words on the Upcoming screen's "your number" box.
   upcomingBox: {
     title: "Your Upcoming number",
-    sub: "This is the one fixed amount that goes into the UPCOMING account every month. You don't track every item in here; it's a general cushion, and Spending absorbs the occasional shortfall.",
-    stuckLabel: "Stuck? Start at 5% of take-home",
-    stuckNote: "Started at 5% of take-home. Adjust whenever.",
+    sub: "5% of your take-home pay. This is the one fixed amount that goes into the UPCOMING account every month. You don't track every item in here; it's a general cushion, and Spending absorbs the occasional shortfall.",
+    nudge: "Bump it up if you know a big year is coming (a wedding, a move, a baby). Otherwise leave it.",
+    resetLabel: "Reset to 5%",
   },
-  // The "stuck" button sets the transfer to this share of take-home pay, rounded up.
-  upcomingStuckShare: 0.05,
-  goalSuggestions: [
-    "Emergency fund", "Pay off credit cards", "General savings", "Roth IRA",
-    "House down payment", "Pay off student loans", "Investing",
-  ],
+
 
   // ---- How often a row happens ------------------------------------
   // "income" and "expense" are how many times a month it counts, on purpose
