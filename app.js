@@ -22,7 +22,7 @@
   //  STATE (saved in the member's browser only)
   // ---------------------------------------------------------
   const STORE = "cfp_state_v1";
-  const blank = () => ({ name: "", partner: "", partnerName: "", incomes: [], bills: [], cardDay: "", spending: {}, upcoming: [], upcomingAmount: "", goalName: "", accounts: {}, step: 0, reached: 0 });
+  const blank = () => ({ name: "", partner: "", partnerName: "", incomes: [], bills: [], cardDay: "", spending: {}, upcoming: [], upcomingAmount: "", goalName: "", payrollMatch: false, accounts: {}, step: 0, reached: 0 });
   let state = blank();
   try { const saved = JSON.parse(localStorage.getItem(STORE) || "null"); if (saved && typeof saved === "object" && Array.isArray(saved.incomes)) state = { ...blank(), ...saved }; } catch (e) {}
   // Older saved plans: Upcoming rows had a cadence or a "needed by" mode; now they are yearly estimates.
@@ -431,8 +431,10 @@
     const steps = C.waterfall || [], spots = C.waterfallSpots || [];
     return `<div class="waterfall">
         <img src="waterfall.png" alt="The Financial Waterfall: ten steps from getting one month ahead on your bills to paying off the mortgage early" width="1475" height="1067">
-        ${steps.map((g, i) => { const sp = spots[i] || [0, 0, 0, 0]; return `<button type="button" class="wf-hit${state.goalName === g ? " on" : ""}" data-goal="${esc(g)}" style="left:${sp[0]}%;top:${sp[1]}%;width:${sp[2]}%;height:${sp[3]}%" aria-label="${esc(g)}" title="${esc(g)}"></button>`; }).join("")}
-      </div>`;
+        ${steps.map((g, i) => { const sp = spots[i] || [0, 0, 0, 0]; const pay = i + 1 === Number(C.payrollStep); const on = pay ? !!state.payrollMatch : state.goalName === g;
+          return `<button type="button" class="wf-hit${on ? " on" : ""}${pay ? " payroll" : ""}" ${pay ? 'data-payroll="1"' : `data-goal="${esc(g)}"`} style="left:${sp[0]}%;top:${sp[1]}%;width:${sp[2]}%;height:${sp[3]}%" aria-label="${esc(g)}${pay ? " (set in payroll)" : ""}" title="${esc(g)}"></button>`; }).join("")}
+      </div>
+      <div class="payroll-note" id="payrollnote" ${state.payrollMatch ? "" : "hidden"}><span class="tag">Payroll</span><span>${esc(C.payrollNote)}</span></div>`;
   }
   function renderBalance(panel) {
     const t = P.totals(state);
@@ -461,6 +463,7 @@
           <label class="eyebrow" for="goal">${esc(C.goalPrompt)}</label>
           ${waterfallHtml()}
           <div class="textrow"><input id="goal" type="text" maxlength="80" placeholder="Tap your step above, or type your own goal" value="${esc(state.goalName)}" autocomplete="off"></div>
+          <p class="tip" id="payrollalso" ${state.payrollMatch ? "" : "hidden"}>${esc(C.payrollAlso)}</p>
         </div>
       </div>${navHtml({ label: "See my map", coral: true })}`;
     wireNav(panel, "balance");
@@ -485,6 +488,13 @@
     const goal = $("#goal", panel);
     goal.addEventListener("input", () => { state.goalName = goal.value; save(); $$("[data-goal]", panel).forEach((c) => c.classList.toggle("on", c.dataset.goal === goal.value.trim())); });
     $$("[data-goal]", panel).forEach((c) => c.addEventListener("click", () => { goal.value = c.dataset.goal; goal.dispatchEvent(new Event("input")); }));
+    const pay = $("[data-payroll]", panel);
+    if (pay) pay.addEventListener("click", () => {
+      state.payrollMatch = !state.payrollMatch; save();
+      pay.classList.toggle("on", state.payrollMatch);
+      $("#payrollnote", panel).hidden = !state.payrollMatch;
+      $("#payrollalso", panel).hidden = !state.payrollMatch;
+    });
   }
 
   // ---------------------------------------------------------
@@ -556,9 +566,10 @@
     const buckets = p.arrows.filter((a) => a.id !== "income").map((ar) => ({ acc: acc.find((a) => a.id === ar.id), amount: ar.amount }));
     const cols = `grid-template-columns:repeat(${buckets.length}, minmax(0, 1fr))`;
     const goalName = P.trim(state.goalName);
-    const goalPill = `<div class="node goal${goalName ? "" : " later"}" data-id="goalpill"><span class="name">${esc(goalName || C.goalPlaceholder || "Pick your goal")}</span><span class="amt">${P.fmt0(t.goals)}</span></div>`;
+    const goalPill = `<div class="node goal${goalName ? "" : " later"}" data-id="goalpill"><span class="name">${esc(goalName || (state.payrollMatch ? "Pick your next step on the Financial Waterfall" : C.goalPlaceholder || "Pick your goal"))}</span><span class="amt">${P.fmt0(t.goals)}</span></div>`;
+    const payroll = state.payrollMatch ? `<div class="node payroll" data-id="payroll"><span class="name">${esc(C.payrollLabel)}</span><span class="type">comes out before take-home</span></div>` : "";
     const map = `<div class="fmap" id="fmap">
-        <div class="fm-row"><div class="node pill" data-id="income"><span class="name">${P.shared(state) ? "Paychecks" : "Paycheck"}</span><span class="amt">${P.fmt0(t.income)}</span></div></div>
+        <div class="fm-row fm-income"><div class="node pill" data-id="income"><span class="name">${P.shared(state) ? "Paychecks" : "Paycheck"}</span><span class="amt">${P.fmt0(t.income)}</span></div>${payroll}</div>
         <div class="fm-row">${node(hub, "hub", t.income)}</div>
         <div class="fm-row fm-buckets" style="${cols}">${buckets.map((b) => node(b.acc, "bkt", b.amount)).join("")}</div>
         <div class="fm-row fm-goal" style="${cols}"><div class="fm-goalcell" style="grid-column:${buckets.length}">${goalPill}</div></div>
@@ -571,11 +582,10 @@
       rows.forEach((r, i) => {
         const cls = [i === 0 ? "sec-first" : "", sec.income ? "income" : "", r.bold ? "bold" : "", r.sub ? "subrow" : ""].filter(Boolean).join(" ");
         body += `<tr class="${cls}">${i === 0 ? acctCell(sec.account, rows.length) : ""}
-          <td class="exp${r.empty || r.sub ? " sub" : ""}">${esc(r.expense)}${r.notes ? `<span class="note">${esc(r.notes)}</span>` : ""}</td><td>${esc(r.date)}</td><td class="num">${r.empty ? "" : P.fmt(r.amount)}</td>
+          <td class="exp${r.empty || r.sub ? " sub" : ""}">${esc(r.expense)}${r.notes ? `<span class="note">${esc(r.notes)}</span>` : ""}</td><td>${esc(r.date)}</td><td class="num">${r.empty || r.blank ? "" : P.fmt(r.amount)}</td>
           ${i === 0 ? `<td class="num total${t.over && sec.account.id === "goals" ? " over" : ""}" rowspan="${rows.length}">${P.fmt(sec.total)}</td>` : ""}</tr>`;
       });
     });
-    const assigned = t.bills + t.spending + t.upcoming + Math.max(t.goals, 0);
     $("#plan").innerHTML = `
       ${map}
       ${donutHtml(p)}
@@ -584,10 +594,6 @@
         <thead><tr><th class="caption" colspan="5">Cashflow Plan</th></tr>
         <tr><th>Account</th><th>Expense</th><th>Date</th><th class="num">Amount</th><th class="num">Monthly total</th></tr></thead>
         <tbody>${body}</tbody>
-        <tfoot>
-          <tr><td colspan="4">Take-home pay into the Hub</td><td class="num">${P.fmt(t.income)}</td></tr>
-          <tr><td colspan="4">Assigned to the four buckets <span class="${t.over ? "bad" : "ok"}">${t.over ? `(over by ${P.fmt(-t.goals)})` : "(100% ✓)"}</span></td><td class="num">${P.fmt(assigned)}</td></tr>
-        </tfoot>
       </table></div>
       `;
     const refreshLabels = () => $$("[data-printed]", $("#plan")).forEach((el) => { el.textContent = P.accountLabel(state, el.dataset.printed); });

@@ -403,6 +403,10 @@ details.more > div { margin-top: 10px; }
 .wf-hit { position: absolute; border: 2px solid transparent; border-radius: 10px; background: transparent; cursor: pointer; padding: 0; transition: background 120ms ease, border-color 120ms ease; }
 .wf-hit:hover { background: rgba(30, 58, 184, 0.10); border-color: rgba(30, 58, 184, 0.35); }
 .wf-hit.on { background: rgba(255, 122, 92, 0.28); border-color: var(--coral); }
+.wf-hit.payroll.on { background: rgba(11, 29, 128, 0.10); border-color: var(--navy); }
+.wf-hit.payroll.on::after { content: "payroll"; width: auto; height: 20px; padding: 0 8px; border-radius: 999px; background: var(--navy); color: var(--navy-ink); font-family: var(--display); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; right: -74px; }
+.payroll-note { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-left: 4px solid var(--navy); background: var(--soft); border-radius: 0 12px 12px 0; font-size: 14px; max-width: 760px; margin: 12px auto 0; }
+.payroll-note .tag { flex: 0 0 auto; font-family: var(--display); font-weight: 700; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--navy); padding-top: 3px; }
 .wf-hit.on::after { content: "✓"; position: absolute; right: -32px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: var(--coral); color: #1a0d09; font-weight: 700; font-size: 14px; display: grid; place-items: center; }
 
 /* --- the plan --- */
@@ -460,6 +464,10 @@ details.more > div { margin-top: 10px; }
 .fmap .node.pill .amt small { color: rgba(255,255,255,0.75); }
 .fmap .node.hub { min-height: 96px; padding-inline: 32px; min-width: 220px; }
 .fmap .node.bkt { min-height: 110px; }
+.fmap .fm-income { position: relative; }
+.fmap .node.payroll { position: absolute; left: calc(50% + 110px); top: 50%; transform: translateY(-50%); background: var(--card); border: 2px dashed var(--border); padding: 10px 14px; gap: 2px; }
+.fmap .node.payroll .name { font-size: 10.5px; letter-spacing: 0.14em; color: var(--muted); }
+.fmap .node.payroll .type { font-family: var(--body); text-transform: none; letter-spacing: 0; font-size: 11px; }
 .fmap .fm-goal { display: grid; gap: 16px; }
 .fmap .fm-goalcell { display: flex; justify-content: center; min-width: 0; }
 .fmap .node.goal { min-width: 0; width: 100%; padding: 14px 16px; border-radius: 12px; }
@@ -595,6 +603,8 @@ table.plan tfoot td.bad { color: var(--coral-ink); }
   .pie-list li { grid-template-columns: 12px minmax(0, 1fr) 56px 90px; gap: 8px; }
   .fmap svg.links { display: none; }
   .fmap .fm-buckets, .fmap .fm-goal { grid-template-columns: 1fr !important; }
+  .fmap .fm-income { display: grid; gap: 12px; }
+  .fmap .node.payroll { position: static; transform: none; }
   .fmap .fm-goalcell { grid-column: auto !important; }
   .wf-hit.on::after { right: -26px; width: 20px; height: 20px; font-size: 12px; }
   .fmap .node .amt { display: block; }

@@ -46,6 +46,12 @@ window.PLANNER_CONFIG = {
     [43.3, 78.4, 29.9, 6.5],
   ],
   goalPrompt: "Which step of the Financial Waterfall are you on? Tap it. That's the goal this money goes to.",
+  // Step 3 is a payroll setting, not a transfer. Tapping it shows this note and asks for
+  // the next step too, which is where the Financial Goals money actually goes.
+  payrollStep: 3,
+  payrollNote: "The 401(k) match happens in payroll, not from this account. Raise your contribution with your employer until you capture the full match. Your take-home pay will drop a little, so come back and update Income when it does. Meanwhile, the money in Financial Goals goes to the next step you're on. Tap that one too.",
+  payrollLabel: "401(k) match · set in payroll",
+  payrollAlso: "Also: max out your 401(k) match in payroll.",
   // Printed in the plan's Financial Goals row when no step is picked.
   goalPlaceholder: "Pick your step on the Financial Waterfall",
 

@@ -164,7 +164,9 @@
     const acc = accounts(s);
     const byId = (id) => acc.find((a) => a.id === id);
     const sections = [];
-    sections.push({ account: byId("hub"), rows: sectionRows(s.incomes, "income"), total: t.income, share: null, income: true });
+    const hubRows = sectionRows(s.incomes, "income");
+    if (s.payrollMatch) hubRows.push({ expense: C.payrollLabel || "401(k) match · set in payroll", notes: "comes out before take-home pay", date: "", amount: 0, sub: true, blank: true });
+    sections.push({ account: byId("hub"), rows: hubRows, total: t.income, share: null, income: true });
     sections.push({ account: byId("bills"), rows: billRows(s), total: t.bills, share: t.share.bills });
     t.spend.forEach((a) => sections.push({ account: byId(a.id), rows: [{ expense: a.name, notes: "", date: "", amount: a.amount }], total: a.amount, share: pct(a.amount, t.income) }));
     sections.push({ account: byId("upcoming"), rows: upcomingRows(s), total: t.upcoming, share: t.share.upcoming });
@@ -191,7 +193,7 @@
       const label = [sec.account.name, accountLabel(s, sec.account.id)].filter(Boolean).join(" | ");
       const rows = sec.rows.length ? sec.rows : [{ expense: "", notes: "", date: "", amount: 0 }];
       rows.forEach((r, i) => {
-        lines.push([i === 0 ? label : "", (r.sub ? "    " : "") + r.expense, r.notes, r.date, num(r.amount), i === 0 ? num(sec.total) : "", i === 0 && sec.share != null ? fmtPct(sec.share) : ""]);
+        lines.push([i === 0 ? label : "", (r.sub ? "    " : "") + r.expense, r.notes, r.date, r.blank ? "" : num(r.amount), i === 0 ? num(sec.total) : "", i === 0 && sec.share != null ? fmtPct(sec.share) : ""]);
       });
     });
     lines.push([]);
