@@ -556,7 +556,7 @@
     const buckets = p.arrows.filter((a) => a.id !== "income").map((ar) => ({ acc: acc.find((a) => a.id === ar.id), amount: ar.amount }));
     const cols = `grid-template-columns:repeat(${buckets.length}, minmax(0, 1fr))`;
     const goalName = P.trim(state.goalName);
-    const goalPill = `<div class="node pill goal${goalName ? "" : " later"}" data-id="goalpill"><span class="type">Current goal</span><span class="name">${esc(goalName || C.goalPlaceholder || "Pick your goal")}</span><span class="amt">${P.fmt0(t.goals)}</span></div>`;
+    const goalPill = `<div class="node goal${goalName ? "" : " later"}" data-id="goalpill"><span class="name">${esc(goalName || C.goalPlaceholder || "Pick your goal")}</span><span class="amt">${P.fmt0(t.goals)}</span></div>`;
     const map = `<div class="fmap" id="fmap">
         <div class="fm-row"><div class="node pill" data-id="income"><span class="name">${P.shared(state) ? "Paychecks" : "Paycheck"}</span><span class="amt">${P.fmt0(t.income)}</span></div></div>
         <div class="fm-row">${node(hub, "hub", t.income)}</div>
