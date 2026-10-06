@@ -31,7 +31,21 @@ window.PLANNER_CONFIG = {
     "Fund taxable brokerage or save for house/college",
     "Pay off mortgage early",
   ],
-  goalPrompt: "Which step of the Financial Waterfall are you on? That's the goal this money goes to.",
+  // Where each step's text sits on waterfall.png, as % of the image (left, top, width,
+  // height), so the steps can be tapped right on the graphic. Re-measure if the graphic changes.
+  waterfallSpots: [
+    [11.5, 14.2, 45.6, 7.0],
+    [14.7, 21.8, 36.3, 6.9],
+    [18.2, 28.7, 40.9, 7.3],
+    [21.7, 36.1, 41.8, 7.0],
+    [24.9, 43.3, 45.3, 6.8],
+    [28.4, 50.7, 33.3, 7.3],
+    [32.0, 58.2, 48.4, 6.4],
+    [35.5, 65.5, 50.5, 7.3],
+    [38.7, 72.9, 60.3, 7.1],
+    [42.1, 79.8, 33.1, 7.0],
+  ],
+  goalPrompt: "Which step of the Financial Waterfall are you on? Tap it. That's the goal this money goes to.",
   // Printed in the plan's Financial Goals row when no step is picked.
   goalPlaceholder: "Pick your step on the Financial Waterfall",
 

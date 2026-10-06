@@ -424,14 +424,14 @@
   function verdictHtml(t) {
     if (t.income <= 0) return `<div class="verdict over"><span>⚠</span><span>There is no income yet. <b>Go back to Income</b> and add your take-home pay.</span></div>`;
     if (t.over) return `<div class="verdict over"><span>⚠</span><span><b>${P.fmt(-t.goals)} a month over.</b> Bills, Spending and Upcoming add up to more than your take-home pay. Lower Spending here, or go back and trim Upcoming or Bills.</span></div>`;
-    return `<div class="verdict ok"><span>✓</span><span><b>Every dollar is assigned.</b> ${P.fmt(t.goals)} a month (${P.fmtPct(t.share.goals)}) flows to Financial Goals.</span></div>`;
+    return "";
   }
-  // The Financial Waterfall: the graphic, and the steps as tappable choices.
+  // The Financial Waterfall graphic with a tap target over each step's text.
   function waterfallHtml() {
-    const steps = C.waterfall || [];
+    const steps = C.waterfall || [], spots = C.waterfallSpots || [];
     return `<div class="waterfall">
-        <img src="waterfall.png" alt="The Financial Waterfall: ten steps from a $2,000 starter emergency fund to paying off the mortgage early" width="1280" height="1012">
-        <div class="steps">${steps.map((g, i) => { const v = `${i + 1}. ${g}`; return `<button type="button" class="step${state.goalName === v ? " on" : ""}" data-goal="${esc(v)}"><span class="n">${i + 1}</span><span class="t">${esc(g)}</span></button>`; }).join("")}</div>
+        <img src="waterfall.png" alt="The Financial Waterfall: ten steps from a $2,000 starter emergency fund to paying off the mortgage early" width="1266" height="1020">
+        ${steps.map((g, i) => { const sp = spots[i] || [0, 0, 0, 0]; return `<button type="button" class="wf-hit${state.goalName === g ? " on" : ""}" data-goal="${esc(g)}" style="left:${sp[0]}%;top:${sp[1]}%;width:${sp[2]}%;height:${sp[3]}%" aria-label="${esc(g)}" title="${esc(g)}"></button>`; }).join("")}
       </div>`;
   }
   function renderBalance(panel) {
@@ -554,10 +554,14 @@
     const node = (a, cls, amount) => `<div class="node ${cls}" data-id="${a.id}"><span class="type">${esc(a.type)}</span><span class="name">${esc(a.name)}</span>${acctLine(a.id, a.name)}<span class="amt">${P.fmt0(amount)}</span></div>`;
     const hub = acc.find((a) => a.id === "hub");
     const buckets = p.arrows.filter((a) => a.id !== "income").map((ar) => ({ acc: acc.find((a) => a.id === ar.id), amount: ar.amount }));
+    const cols = `grid-template-columns:repeat(${buckets.length}, minmax(0, 1fr))`;
+    const goalName = P.trim(state.goalName);
+    const goalPill = `<div class="node pill goal${goalName ? "" : " later"}" data-id="goalpill"><span class="type">Current goal</span><span class="name">${esc(goalName || C.goalPlaceholder || "Pick your goal")}</span><span class="amt">${P.fmt0(t.goals)}</span></div>`;
     const map = `<div class="fmap" id="fmap">
         <div class="fm-row"><div class="node pill" data-id="income"><span class="name">${P.shared(state) ? "Paychecks" : "Paycheck"}</span><span class="amt">${P.fmt0(t.income)}</span></div></div>
         <div class="fm-row">${node(hub, "hub", t.income)}</div>
-        <div class="fm-row fm-buckets">${buckets.map((b) => node(b.acc, "bkt", b.amount)).join("")}</div>
+        <div class="fm-row fm-buckets" style="${cols}">${buckets.map((b) => node(b.acc, "bkt", b.amount)).join("")}</div>
+        <div class="fm-row fm-goal" style="${cols}"><div class="fm-goalcell" style="grid-column:${buckets.length}">${goalPill}</div></div>
         <svg class="links" aria-hidden="true"></svg>
       </div>`;
 
@@ -626,6 +630,8 @@
     if (inc && hub) arrow({ x: inc.cx, y: inc.bottom }, { x: hub.cx, y: hub.y - 1 }, amountOf("income"));
     const ids = Array.from(map.querySelectorAll(".fm-buckets .node")).map((n) => n.dataset.id);
     ids.forEach((id) => { const b = rect(id); if (hub && b) arrow({ x: hub.cx, y: hub.bottom }, { x: b.cx, y: b.y - 1 }, amountOf(id)); });
+    const g = rect("goals"), gp = rect("goalpill");
+    if (g && gp) arrow({ x: g.cx, y: g.bottom }, { x: gp.cx, y: gp.y - 1 }, amountOf("goals"));
     svg.innerHTML = out;
   }
 
