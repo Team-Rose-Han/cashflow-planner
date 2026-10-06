@@ -20,7 +20,7 @@ window.PLANNER_CONFIG = {
   // Shown on the Financial Goals screen (waterfall.png) with the steps as tappable
   // choices. The member picks the step they are on; that is their current goal.
   waterfall: [
-    "Save $2,000 starter emergency fund",
+    "Get one month ahead on your bills",
     "Pay off ALL credit card debt",
     "Max out 401(k) employer match",
     "Save 6-month full emergency fund",
