@@ -449,8 +449,8 @@
             <button type="button" class="edit" data-go="bills">Edit bills</button>
             <span class="amt" data-amt="bills">${P.fmt(t.bills)}<small>${P.fmtPct(t.share.bills)} of take-home</small></span></div>
           ${spendRows}
-          <div class="bucket"><span class="swatch upcoming"></span><div><span class="nm">${esc(B.upcoming.name)}</span><br><span class="sub">Your fixed monthly cushion (5% of take-home to start)</span></div>
-            <button type="button" class="edit" data-go="upcoming">Edit upcoming</button>
+          <div class="bucket upcoming"><span class="swatch upcoming"></span><div><span class="nm">${esc(B.upcoming.name)}</span><br><span class="sub">Your fixed monthly cushion (5% of take-home to start)</span></div>
+            ${moneyIn(`id="upamount" aria-label="Upcoming per month"`, prettyMoney(String(state.upcomingAmount || "").trim() ? state.upcomingAmount : P.upcomingSuggested(state)))}
             <span class="amt" data-amt="upcoming">${P.fmt(t.upcoming)}<small>${P.fmtPct(t.share.upcoming)} of take-home</small></span></div>
           <div class="bucket goals${t.over ? " over" : ""}" id="goalsrow"><span class="swatch goals"></span><div><span class="nm">${esc(B.goals.name)}</span><br><span class="sub">Whatever is left after the other three</span></div>
             <span></span>
@@ -469,6 +469,7 @@
       const t2 = P.totals(state);
       refreshTracker(panel);
       t2.spend.forEach((a) => { $(`[data-amt="${a.id}"]`, panel).innerHTML = `${P.fmt(a.amount)}<small>${P.fmtPct(P.pct(a.amount, t2.income))} of take-home</small>`; });
+      $(`[data-amt="upcoming"]`, panel).innerHTML = `${P.fmt(t2.upcoming)}<small>${P.fmtPct(t2.share.upcoming)} of take-home</small>`;
       $(`[data-amt="goals"]`, panel).innerHTML = `${P.fmt(t2.goals)}<small>${P.fmtPct(t2.share.goals)} of take-home</small>`;
       $("#goalsrow", panel).classList.toggle("over", t2.over);
       $("#verdict", panel).innerHTML = verdictHtml(t2);
@@ -478,6 +479,9 @@
       inp.addEventListener("input", () => { state.spending[inp.dataset.acc] = inp.value; save(); update(); });
       inp.addEventListener("blur", () => { inp.value = prettyMoney(inp.value); });
     });
+    const up = $("#upamount", panel);
+    up.addEventListener("input", () => { state.upcomingAmount = up.value; save(); update(); });
+    up.addEventListener("blur", () => { up.value = prettyMoney(String(state.upcomingAmount || "").trim() ? state.upcomingAmount : P.upcomingSuggested(state)); });
     const goal = $("#goal", panel);
     goal.addEventListener("input", () => { state.goalName = goal.value; save(); $$("[data-goal]", panel).forEach((c) => c.classList.toggle("on", c.dataset.goal === goal.value.trim())); });
     $$("[data-goal]", panel).forEach((c) => c.addEventListener("click", () => { goal.value = c.dataset.goal; goal.dispatchEvent(new Event("input")); }));
