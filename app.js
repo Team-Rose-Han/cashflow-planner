@@ -430,7 +430,7 @@
   function waterfallHtml() {
     const steps = C.waterfall || [], spots = C.waterfallSpots || [];
     return `<div class="waterfall">
-        <img src="waterfall.png" alt="The Financial Waterfall: ten steps from getting one month ahead on your bills to paying off the mortgage early" width="1266" height="1020">
+        <img src="waterfall.png" alt="The Financial Waterfall: ten steps from getting one month ahead on your bills to paying off the mortgage early" width="1475" height="1067">
         ${steps.map((g, i) => { const sp = spots[i] || [0, 0, 0, 0]; return `<button type="button" class="wf-hit${state.goalName === g ? " on" : ""}" data-goal="${esc(g)}" style="left:${sp[0]}%;top:${sp[1]}%;width:${sp[2]}%;height:${sp[3]}%" aria-label="${esc(g)}" title="${esc(g)}"></button>`; }).join("")}
       </div>`;
   }
