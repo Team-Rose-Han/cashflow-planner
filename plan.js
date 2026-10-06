@@ -81,7 +81,7 @@
     const you = trim(s.name), them = shared(s) ? trim(s.partnerName) : "";
     const who = you && them ? `${you} & ${them}` : you || (them ? `You & ${them}` : "");
     const p = possessive(who);
-    return p ? `${p} Updated Money Flywheel Map` : "Your Updated Money Flywheel Map";
+    return p ? `${p} Cashflow Plan and Updated Money Flywheel Map` : "Your Cashflow Plan and Updated Money Flywheel Map";
   }
 
   // ---------------------------------------------------------
