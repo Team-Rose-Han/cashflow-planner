@@ -109,7 +109,7 @@ window.PLANNER_CONFIG = {
   upcomingBox: {
     title: "Your Upcoming number",
     sub: "5% of your take-home pay. This is the one fixed amount that goes into the UPCOMING account every month. You don't track every item in here; it's a general cushion, and Spending absorbs the occasional shortfall.",
-    nudge: "Bump it up if you know a big year is coming (a wedding, a move, a baby). Otherwise leave it.",
+    nudge: "Bump it up if you know a big event is coming (a wedding, a move, a surgery, a baby). Otherwise leave it at 5%.",
     resetLabel: "Reset to 5%",
   },
 
