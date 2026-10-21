@@ -223,7 +223,7 @@
       h2: () => C.questions.bills,
       what: () => C.buckets.bills.what, chips: () => C.billSuggestions, tip: () => C.tips.bills,
       ph: { name: "e.g. Rent", when: "e.g. 1st, 15th" },
-      head: ["Name", "When", "Amount", "How often", "Paid from", "Per month", ""],
+      head: ["", "Name", "When", "Amount", "How often", "Paid from", "Per month", ""],
       add: "Add a bill", total: "Bills, per month", empty: "No bills yet. Pick from the suggestions above or add a row.",
     },
   };
@@ -248,11 +248,9 @@
     const freq = `<select data-f="freq" aria-label="How often">${freqs.map((f) => `<option value="${f}" ${r.freq === f ? "selected" : ""}>${esc(C.cadence[f].label)}</option>`).join("")}</select>`;
     const when = `<input class="f-when" data-f="when" type="text" maxlength="20" placeholder="${esc(L.ph.when)}" value="${esc(r.when || "")}" aria-label="When">`;
     const via = L.kind === "expense" ? `<select data-f="via" aria-label="Paid from"><option value="bank" ${r.via !== "card" ? "selected" : ""}>Bills account</option><option value="card" ${r.via === "card" ? "selected" : ""}>Credit card</option></select>` : "";
-    const tools = L.kind === "expense"
-      ? `<span class="tools"><button type="button" class="tool up" aria-label="Move up" title="Move up">↑</button><button type="button" class="tool down" aria-label="Move down" title="Move down">↓</button><button type="button" class="tool ins" aria-label="Add a bill below this one" title="Add a bill below">+</button>${rm}</span>`
-      : rm;
-    return `<div class="row ${L.kind === "income" ? "income" : "bills"}" data-row="${r.id}">${name}${when}
-      ${moneyIn(`data-f="amount" aria-label="Amount"`, prettyMoney(r.amount))}${freq}${via}${perMonth}${tools}</div>`;
+    const grip = L.kind === "expense" ? `<span class="grip" role="button" aria-label="Drag to reorder" title="Drag to reorder"><i></i><i></i><i></i></span>` : "";
+    return `<div class="row ${L.kind === "income" ? "income" : "bills"}" data-row="${r.id}">${grip}${name}${when}
+      ${moneyIn(`data-f="amount" aria-label="Amount"`, prettyMoney(r.amount))}${freq}${via}${perMonth}${rm}</div>`;
   }
   function cardBoxHtml() {
     const card = state.bills.filter(P.onCard);
@@ -262,6 +260,48 @@
       <label class="when">Paid from Bills on the <input id="cardday" type="text" maxlength="20" placeholder="e.g. 24th" value="${esc(state.cardDay || "")}" aria-label="Credit card due date"></label>
       <span class="amt" id="cardtotal">${P.fmt(P.cardTotal(state))}<small>/mo on the card</small></span>
     </div>`;
+  }
+  // Press the grip and drag: the row lifts, the others slide out of the way as you pass
+  // them, and it stays where you let go. Works with a mouse or a finger.
+  function wireDrag(grip, rowEl, panel, done) {
+    grip.addEventListener("pointerdown", (e) => {
+      if (e.button != null && e.button !== 0) return;
+      e.preventDefault();
+      grip.setPointerCapture(e.pointerId);
+      const list = rowEl.parentElement;
+      const startY = e.clientY, startTop = rowEl.getBoundingClientRect().top;
+      rowEl.classList.add("dragging");
+      let moved = false;
+      const place = (y) => {
+        // Slot the row by where the pointer is among the other rows' midpoints.
+        const sibs = $$(".row", list).filter((el) => el !== rowEl);
+        const idx = sibs.filter((el) => { const b = el.getBoundingClientRect(); return b.top + b.height / 2 < y; }).length;
+        const ref = sibs[idx];
+        if (ref) { if (rowEl.nextElementSibling !== ref) list.insertBefore(rowEl, ref); }
+        else if (sibs.length && sibs[sibs.length - 1].nextElementSibling !== rowEl) sibs[sibs.length - 1].after(rowEl);
+      };
+      const follow = (y) => {
+        rowEl.style.transform = "";
+        const top = rowEl.getBoundingClientRect().top;
+        rowEl.style.transform = `translateY(${y - startY + startTop - top}px)`;
+      };
+      const onMove = (ev) => {
+        if (Math.abs(ev.clientY - startY) > 3) moved = true;
+        place(ev.clientY); follow(ev.clientY);
+        if (ev.clientY < 70) window.scrollBy(0, -8); else if (ev.clientY > window.innerHeight - 70) window.scrollBy(0, 8);
+      };
+      const onUp = () => {
+        grip.removeEventListener("pointermove", onMove);
+        grip.removeEventListener("pointerup", onUp);
+        grip.removeEventListener("pointercancel", onUp);
+        rowEl.classList.remove("dragging");
+        rowEl.style.transform = "";
+        if (moved) { rowEl.classList.add("moved"); done(); }
+      };
+      grip.addEventListener("pointermove", onMove);
+      grip.addEventListener("pointerup", onUp);
+      grip.addEventListener("pointercancel", onUp);
+    });
   }
   function renderList(panel, id) {
     const L = LISTS[id];
@@ -301,11 +341,8 @@
       const r = newRow(ch.dataset.chip, ch.dataset.freq, ch.dataset.hint);
       renderList(panel, id); focusRow(r, "amount");
     }));
-    $$(".row", panel).forEach((rowEl, idx) => {
+    $$(".row", panel).forEach((rowEl) => {
       const r = rows.find((x) => x.id === rowEl.dataset.row);
-      const upB = $(".up", rowEl), downB = $(".down", rowEl);
-      if (upB) upB.disabled = idx === 0;
-      if (downB) downB.disabled = idx === rows.length - 1;
       $$("[data-f]", rowEl).forEach((inp) => {
         const set = () => {
           r[inp.dataset.f] = inp.value; save();
@@ -318,13 +355,12 @@
         if (inp.dataset.f === "amount") inp.addEventListener("blur", () => { inp.value = prettyMoney(inp.value); });
       });
       $(".rm", rowEl).addEventListener("click", () => { state[L.key] = rows.filter((x) => x.id !== r.id); save(); renderList(panel, id); });
-      const move = (dir) => { const i = rows.indexOf(r), j = i + dir; if (j < 0 || j >= rows.length) return; rows.splice(i, 1); rows.splice(j, 0, r); save(); renderList(panel, id); const el = $(`[data-row="${r.id}"]`, panel); if (el) el.classList.add("moved"); };
-      const up = $(".up", rowEl), down = $(".down", rowEl), ins = $(".ins", rowEl);
-      if (up) up.addEventListener("click", () => move(-1));
-      if (down) down.addEventListener("click", () => move(1));
-      if (ins) ins.addEventListener("click", () => {
-        const n = { id: uid(), name: "", when: "", amount: "", freq: L.defaultFreq, via: "bank" };
-        rows.splice(rows.indexOf(r) + 1, 0, n); save(); renderList(panel, id); focusRow(n, "name");
+      const grip = $(".grip", rowEl);
+      if (grip) wireDrag(grip, rowEl, panel, () => {
+        // Read the new order off the DOM and store it.
+        const order = $$(".row", panel).map((el) => el.dataset.row);
+        state[L.key] = order.map((rid) => rows.find((x) => x.id === rid)).filter(Boolean);
+        save();
       });
     });
     const cd = $("#cardday", panel);
