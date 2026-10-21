@@ -248,8 +248,11 @@
     const freq = `<select data-f="freq" aria-label="How often">${freqs.map((f) => `<option value="${f}" ${r.freq === f ? "selected" : ""}>${esc(C.cadence[f].label)}</option>`).join("")}</select>`;
     const when = `<input class="f-when" data-f="when" type="text" maxlength="20" placeholder="${esc(L.ph.when)}" value="${esc(r.when || "")}" aria-label="When">`;
     const via = L.kind === "expense" ? `<select data-f="via" aria-label="Paid from"><option value="bank" ${r.via !== "card" ? "selected" : ""}>Bills account</option><option value="card" ${r.via === "card" ? "selected" : ""}>Credit card</option></select>` : "";
+    const tools = L.kind === "expense"
+      ? `<span class="tools"><button type="button" class="tool up" aria-label="Move up" title="Move up">↑</button><button type="button" class="tool down" aria-label="Move down" title="Move down">↓</button><button type="button" class="tool ins" aria-label="Add a bill below this one" title="Add a bill below">+</button>${rm}</span>`
+      : rm;
     return `<div class="row ${L.kind === "income" ? "income" : "bills"}" data-row="${r.id}">${name}${when}
-      ${moneyIn(`data-f="amount" aria-label="Amount"`, prettyMoney(r.amount))}${freq}${via}${perMonth}${rm}</div>`;
+      ${moneyIn(`data-f="amount" aria-label="Amount"`, prettyMoney(r.amount))}${freq}${via}${perMonth}${tools}</div>`;
   }
   function cardBoxHtml() {
     const card = state.bills.filter(P.onCard);
@@ -298,8 +301,11 @@
       const r = newRow(ch.dataset.chip, ch.dataset.freq, ch.dataset.hint);
       renderList(panel, id); focusRow(r, "amount");
     }));
-    $$(".row", panel).forEach((rowEl) => {
+    $$(".row", panel).forEach((rowEl, idx) => {
       const r = rows.find((x) => x.id === rowEl.dataset.row);
+      const upB = $(".up", rowEl), downB = $(".down", rowEl);
+      if (upB) upB.disabled = idx === 0;
+      if (downB) downB.disabled = idx === rows.length - 1;
       $$("[data-f]", rowEl).forEach((inp) => {
         const set = () => {
           r[inp.dataset.f] = inp.value; save();
@@ -312,6 +318,14 @@
         if (inp.dataset.f === "amount") inp.addEventListener("blur", () => { inp.value = prettyMoney(inp.value); });
       });
       $(".rm", rowEl).addEventListener("click", () => { state[L.key] = rows.filter((x) => x.id !== r.id); save(); renderList(panel, id); });
+      const move = (dir) => { const i = rows.indexOf(r), j = i + dir; if (j < 0 || j >= rows.length) return; rows.splice(i, 1); rows.splice(j, 0, r); save(); renderList(panel, id); const el = $(`[data-row="${r.id}"]`, panel); if (el) el.classList.add("moved"); };
+      const up = $(".up", rowEl), down = $(".down", rowEl), ins = $(".ins", rowEl);
+      if (up) up.addEventListener("click", () => move(-1));
+      if (down) down.addEventListener("click", () => move(1));
+      if (ins) ins.addEventListener("click", () => {
+        const n = { id: uid(), name: "", when: "", amount: "", freq: L.defaultFreq, via: "bank" };
+        rows.splice(rows.indexOf(r) + 1, 0, n); save(); renderList(panel, id); focusRow(n, "name");
+      });
     });
     const cd = $("#cardday", panel);
     if (cd) cd.addEventListener("input", () => { state.cardDay = cd.value; save(); cd.classList.remove("missing"); });

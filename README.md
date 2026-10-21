@@ -37,7 +37,9 @@ each screen; the live training does that.
    **Paid from** choice: Bills account, or Credit card. Card charges are added up
    into one **Credit card auto-pay** line with its own due date, and the plan lists
    the individual charges under it in grey, like Rose's sheet. Nothing is counted
-   twice. Every income row and every bill needs its "When" (and the card line its due date) before
+   twice. Each bill row has arrows to move it up or down and a "+" to add a bill right
+   below it, so the list can be kept in whatever order reads best; the plan prints
+   the bills in that order. Every income row and every bill needs its "When" (and the card line its due date) before
    Continue works; missing ones turn coral.
 4. **Spending.** One monthly amount (two for couples, one per partner), with the
    weekly equivalent shown underneath and a running "what's left after Bills" line.

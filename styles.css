@@ -244,7 +244,20 @@ details.more > div { margin-top: 10px; }
 .rows { display: grid; gap: 8px; }
 .rowhead, .row { display: grid; gap: 8px; align-items: center; }
 .rows.income .rowhead, .row.income { grid-template-columns: minmax(170px, 2fr) 130px 140px 160px 96px 36px; }
-.rows.bills .rowhead, .row.bills { grid-template-columns: minmax(150px, 2fr) 100px 130px 150px 140px 92px 36px; }
+.rows.bills .rowhead, .row.bills { grid-template-columns: minmax(150px, 2fr) 100px 130px 150px 140px 92px 136px; }
+.row .tools { display: inline-flex; gap: 4px; justify-content: flex-end; }
+.row .tool {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--card); color: var(--muted);
+  cursor: pointer; font-size: 15px; line-height: 1; display: grid; place-items: center; padding: 0;
+}
+.row .tool:hover { border-color: var(--ink); color: var(--ink); }
+.row .tool.ins { color: var(--navy); border-color: #b9c2ec; background: #eef1fb; font-weight: 700; }
+.row .tool.ins:hover { background: var(--navy); border-color: var(--navy); color: var(--navy-ink); }
+.row .tool:disabled { opacity: 0.3; cursor: default; }
+.row .tools .rm { width: 30px; height: 30px; font-size: 16px; }
+.row.moved { animation: rowflash 700ms ease; }
+@keyframes rowflash { from { background: #eef1fb; } to { background: transparent; } }
 .rows.upcoming .rowhead, .row.upcoming { grid-template-columns: minmax(170px, 2fr) 170px 110px 36px; }
 .fixedbox {
   display: grid;
@@ -566,7 +579,7 @@ table.plan tfoot td.bad { color: var(--coral-ink); }
   .rowhead { display: none; }
   .row, .row.income, .row.bills, .row.upcoming {
     grid-template-columns: minmax(0, 1fr) 120px 36px;
-    grid-template-areas: "name amount rm" "when freq freq" "via via mo";
+    grid-template-areas: "name amount rm" "when freq freq" "via via mo" "tools tools tools";
     padding: 10px;
     border: 1.5px solid var(--border);
     border-radius: 12px;
@@ -580,6 +593,9 @@ table.plan tfoot td.bad { color: var(--coral-ink); }
   .row select[data-f="freq"] { grid-area: freq; }
   .row select[data-f="via"] { grid-area: via; }
   .row .mo { grid-area: mo; }
+  .row .tools { grid-area: tools; justify-content: flex-start; padding-top: 2px; }
+  .row.bills .tools .rm { margin-left: auto; }
+  .row.bills > .rm { display: none; }
   .cardbox, .fixedbox { grid-template-columns: minmax(0, 1fr); }
   .math .op { font-size: 22px; flex: 1 1 100%; text-align: center; line-height: 0.6; }
   .math .m { flex: 1 1 100%; }
